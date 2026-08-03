@@ -56,44 +56,32 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
         os.makedirs(download_dir, exist_ok=True)
         
         # ==========================================
-        # NO FFMPEG REQUIRED - Use single file formats
+        # SIMPLEST WORKING COMMANDS - NO FFMPEG
         # ==========================================
         
         if format_type == 'audio':
-            # Download audio as m4a (no FFmpeg needed)
+            # Download best audio as m4a
             command = [
                 'yt-dlp',
-                '-f', 'bestaudio[ext=m4a]',  # Download audio only
+                '-f', 'bestaudio',
                 '--extract-audio',
                 '--audio-format', 'm4a',
                 '-o', os.path.join(download_dir, '%(title)s.%(ext)s'),
-                '--no-playlist',
-                '--newline',
-                url
-            ]
-        elif quality == 'best':
-            # Download best MP4 (no merging needed)
-            command = [
-                'yt-dlp',
-                '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
-                '-o', os.path.join(download_dir, '%(title)s.%(ext)s'),
-                '--no-playlist',
-                '--newline',
                 url
             ]
         else:
-            # Download specific quality MP4
+            # Download best video + audio in a single file
+            # Using the simplest format selector
             command = [
                 'yt-dlp',
-                '-f', f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/best[height<={quality}][ext=mp4]',
+                '-f', 'best[ext=mp4]',  # This downloads the best MP4 available
                 '-o', os.path.join(download_dir, '%(title)s.%(ext)s'),
-                '--no-playlist',
-                '--newline',
                 url
             ]
         
-        print(f"Running command: {' '.join(command)}")
+        print(f"Running: {' '.join(command)}")
         
+        # Run the command
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -102,8 +90,9 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
             bufsize=1
         )
         
+        # Track progress
         for line in process.stdout:
-            print(line)  # Log for debugging
+            print(line)  # Log to Render
             if '[download]' in line and '%' in line:
                 try:
                     percent_match = re.search(r'(\d+\.\d+)%', line)
@@ -119,7 +108,8 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
         # Check if download succeeded
         if process.returncode != 0:
             status['status'] = 'error'
-            status['message'] = 'Download failed with error code'
+            status['message'] = f'Download failed (code: {process.returncode})'
+            print(f"Error: Process returned {process.returncode}")
             return
         
         # Find downloaded file
@@ -156,11 +146,12 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
         else:
             status['status'] = 'error'
             status['message'] = 'No file downloaded'
+            print("Error: No files in download directory")
             
     except Exception as e:
         status['status'] = 'error'
         status['message'] = str(e)
-        print(f"Error: {e}")
+        print(f"Exception: {e}")
 
 # ============================================
 # ROUTES
