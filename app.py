@@ -193,7 +193,7 @@ def debug():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return "VERSION 2 - I AM HERE"
 
 @app.route('/download', methods=['POST'])
 def start_download():
