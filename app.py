@@ -138,9 +138,9 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
 # ROUTES
 # ============================================
 
-@app.route("/")
-def index():
-    return "HOME PAGE WORKS"
+@app.route("/test-template")
+def test_template():
+    return render_template("index.html")
 
 @app.route("/routes")
 def routes():
