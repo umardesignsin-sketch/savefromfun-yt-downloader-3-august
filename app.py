@@ -175,6 +175,14 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
 # ROUTES
 # ============================================
 
+@app.route("/test-log")
+def test_log():
+    print("=" * 50)
+    print("THIS IS A TEST LOG")
+    print("=" * 50)
+    return "OK"
+
+
 @app.route("/debug")
 def debug():
     import shutil
