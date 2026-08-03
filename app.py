@@ -214,12 +214,7 @@ def start_download():
         'message': 'Initializing...'
     }
     
-    thread = threading.Thread(
-        target=download_video_web,
-        args=(url, download_id, quality, format_type)
-    )
-    thread.daemon = True
-    thread.start()
+    download_video_web(url, download_id, quality, format_type)
     
     return jsonify({'download_id': download_id, 'status': 'started'})
 
