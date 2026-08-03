@@ -138,9 +138,16 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
 # ROUTES
 # ============================================
 
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return "HOME PAGE WORKS"
+
+@app.route("/routes")
+def routes():
+    return "<br>".join(
+        f"{rule.rule} → {', '.join(sorted(rule.methods - {'HEAD', 'OPTIONS'}))}"
+        for rule in app.url_map.iter_rules()
+    )
 
 @app.route('/download', methods=['POST'])
 def start_download():
@@ -186,30 +193,23 @@ def get_status(download_id):
 
 @app.route('/download/<download_id>/file')
 def get_file(download_id):
-    """Download the completed file"""
     if download_id not in download_status:
-        return jsonify({'error': 'Download not found'}), 404
+        return jsonify({'error': 'Not found'}), 404
     
     status = download_status[download_id]
     if status['status'] != 'completed':
-        return jsonify({'error': 'Download not complete'}), 400
+        return jsonify({'error': 'Not complete'}), 400
     
-    # If Cloudinary URL exists, redirect to it
     if status.get('download_url'):
         return redirect(status['download_url'])
     
-    # Fallback: serve directly from server
     filepath = status.get('filepath')
     filename = status.get('filename')
     
     if not filepath or not os.path.exists(filepath):
         return jsonify({'error': 'File not found'}), 404
     
-    return send_file(
-        filepath,
-        as_attachment=True,
-        download_name=filename
-    )
+    return send_file(filepath, as_attachment=True, download_name=filename)
 
 if __name__ == '__main__':
     print("=" * 60)
