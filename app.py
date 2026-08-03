@@ -55,27 +55,44 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
         download_dir = os.path.join(DOWNLOAD_FOLDER, download_id)
         os.makedirs(download_dir, exist_ok=True)
         
+        # ==========================================
+        # NO FFMPEG REQUIRED - Use single file formats
+        # ==========================================
+        
         if format_type == 'audio':
+            # Download audio as m4a (no FFmpeg needed)
             command = [
-                'yt-dlp', '-x', '--audio-format', 'mp3', '--audio-quality', '0',
+                'yt-dlp',
+                '-f', 'bestaudio[ext=m4a]',  # Download audio only
+                '--extract-audio',
+                '--audio-format', 'm4a',
                 '-o', os.path.join(download_dir, '%(title)s.%(ext)s'),
-                '--no-playlist', '--newline', url
+                '--no-playlist',
+                '--newline',
+                url
             ]
         elif quality == 'best':
+            # Download best MP4 (no merging needed)
             command = [
                 'yt-dlp',
+                '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
                 '-o', os.path.join(download_dir, '%(title)s.%(ext)s'),
-                '--merge-output-format', 'mp4',
-                '--no-playlist', '--newline', url
+                '--no-playlist',
+                '--newline',
+                url
             ]
         else:
+            # Download specific quality MP4
             command = [
                 'yt-dlp',
-                '-f', f'bestvideo[height<={quality}]+bestaudio/best[height<={quality}]',
-                '--merge-output-format', 'mp4',
+                '-f', f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/best[height<={quality}][ext=mp4]',
                 '-o', os.path.join(download_dir, '%(title)s.%(ext)s'),
-                '--no-playlist', '--newline', url
+                '--no-playlist',
+                '--newline',
+                url
             ]
+        
+        print(f"Running command: {' '.join(command)}")
         
         process = subprocess.Popen(
             command,
@@ -86,6 +103,7 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
         )
         
         for line in process.stdout:
+            print(line)  # Log for debugging
             if '[download]' in line and '%' in line:
                 try:
                     percent_match = re.search(r'(\d+\.\d+)%', line)
@@ -98,11 +116,19 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
         
         process.wait()
         
+        # Check if download succeeded
+        if process.returncode != 0:
+            status['status'] = 'error'
+            status['message'] = 'Download failed with error code'
+            return
+        
+        # Find downloaded file
         files = os.listdir(download_dir)
         if files:
             filename = files[0]
             filepath = os.path.join(download_dir, filename)
             
+            # Try uploading to Cloudinary
             status['status'] = 'uploading'
             status['progress'] = 99
             status['message'] = 'Uploading to CDN...'
@@ -120,6 +146,7 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
                 except:
                     pass
             else:
+                # Fallback: serve directly
                 status['status'] = 'completed'
                 status['progress'] = 100
                 status['filename'] = filename
@@ -133,21 +160,15 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
     except Exception as e:
         status['status'] = 'error'
         status['message'] = str(e)
+        print(f"Error: {e}")
 
 # ============================================
 # ROUTES
 # ============================================
 
-@app.route("/test-template")
-def test_template():
-    return render_template("index.html")
-
-@app.route("/routes")
-def routes():
-    return "<br>".join(
-        f"{rule.rule} → {', '.join(sorted(rule.methods - {'HEAD', 'OPTIONS'}))}"
-        for rule in app.url_map.iter_rules()
-    )
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/download', methods=['POST'])
 def start_download():
@@ -194,11 +215,11 @@ def get_status(download_id):
 @app.route('/download/<download_id>/file')
 def get_file(download_id):
     if download_id not in download_status:
-        return jsonify({'error': 'Not found'}), 404
+        return jsonify({'error': 'Download not found'}), 404
     
     status = download_status[download_id]
     if status['status'] != 'completed':
-        return jsonify({'error': 'Not complete'}), 400
+        return jsonify({'error': 'Download not complete'}), 400
     
     if status.get('download_url'):
         return redirect(status['download_url'])
