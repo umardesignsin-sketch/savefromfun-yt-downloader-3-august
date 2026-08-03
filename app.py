@@ -157,6 +157,14 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
 # ROUTES
 # ============================================
 
+@app.route("/debug")
+def debug():
+    import shutil
+    return {
+        "yt_dlp": shutil.which("yt-dlp"),
+        "ffmpeg": shutil.which("ffmpeg")
+    }
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -233,3 +241,5 @@ if __name__ == '__main__':
     
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)
+
+    
