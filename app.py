@@ -198,14 +198,6 @@ def debug():
         "ffmpeg": shutil.which("ffmpeg")
     }
 
-@app.route("/debug")
-def debug():
-    import shutil
-    return {
-        "yt_dlp": shutil.which("yt-dlp"),
-        "ffmpeg": shutil.which("ffmpeg")
-    }
-
 
 @app.route("/test")
 def test():
