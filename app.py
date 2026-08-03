@@ -47,6 +47,13 @@ def upload_to_cloudinary(filepath, filename):
         return None
 
 def download_video_web(url, download_id, quality='best', format_type='video'):
+
+    print("=" * 60)
+    print("DOWNLOAD FUNCTION STARTED")
+    print("URL:", url)
+    print("Quality:", quality)
+    print("Format:", format_type)
+    print("=" * 60)
     try:
         status = download_status[download_id]
         status['status'] = 'downloading'
@@ -82,6 +89,8 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
         print(f"Running: {' '.join(command)}")
         
         # Run the command
+        print("Running command:")
+        print(command)
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -104,6 +113,17 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
                     pass
         
         process.wait()
+        
+        print("=" * 60)
+        print("yt-dlp finished")
+        print("Return code:", process.returncode)
+
+        if os.path.exists(download_dir):
+             print("Downloaded files:", os.listdir(download_dir))
+        else:
+            print("Download directory doesn't exist")
+
+        print("=" * 60)
         
         # Check if download succeeded
         if process.returncode != 0:
