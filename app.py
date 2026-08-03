@@ -113,24 +113,22 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
                     pass
         
         process.wait()
+
         
-        print("=" * 60)
-        print("yt-dlp finished")
-        print("Return code:", process.returncode)
-
-        if os.path.exists(download_dir):
-             print("Downloaded files:", os.listdir(download_dir))
-        else:
-            print("Download directory doesn't exist")
-
-        print("=" * 60)
         
         # Check if download succeeded
         if process.returncode != 0:
-            status['status'] = 'error'
-            status['message'] = f'Download failed (code: {process.returncode})'
-            print(f"Error: Process returned {process.returncode}")
-            return
+             print("=" * 60)
+             print("YT-DLP FAILED")
+             print("Return code:", process.returncode)
+
+        print("See Render logs above for yt-dlp output.")
+
+        print("=" * 60)
+
+        status['status'] = 'error'
+        status['message'] = "Download failed. Check Render logs."
+        return
         
         # Find downloaded file
         files = os.listdir(download_dir)
