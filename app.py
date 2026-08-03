@@ -80,10 +80,12 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
             # Download best video + audio in a single file
             # Using the simplest format selector
             command = [
-                'yt-dlp',
-                '-f', 'best[ext=mp4]',  # This downloads the best MP4 available
-                '-o', os.path.join(download_dir, '%(title)s.%(ext)s'),
-                url
+                 'yt-dlp',
+                 '-f', 'bv*+ba/b',
+                 '--merge-output-format', 'mp4',
+                 '-o', os.path.join(download_dir, '%(title)s.%(ext)s'),
+                 '--no-playlist',
+                 url
             ]
         
         print(f"Running: {' '.join(command)}")
@@ -118,16 +120,21 @@ def download_video_web(url, download_id, quality='best', format_type='video'):
         
         # Check if download succeeded
         if process.returncode != 0:
-             print("=" * 60)
-             print("YT-DLP FAILED")
-             print("Return code:", process.returncode)
+           error_text = ""
 
-        print("See Render logs above for yt-dlp output.")
-
-        print("=" * 60)
+        if process.stdout:
+           try:
+              error_text = process.stdout.read()
+           except Exception:
+            error_text = ""
 
         status['status'] = 'error'
-        status['message'] = "Download failed. Check Render logs."
+        status['message'] = error_text if error_text else f"yt-dlp exited with code {process.returncode}"
+
+        print("=" * 60)
+        print(error_text)
+        print("=" * 60)
+
         return
         
         # Find downloaded file
