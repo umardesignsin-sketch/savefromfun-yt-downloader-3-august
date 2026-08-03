@@ -198,9 +198,41 @@ def debug():
         "ffmpeg": shutil.which("ffmpeg")
     }
 
-@app.route('/')
+@app.route("/debug")
+def debug():
+    import shutil
+    return {
+        "yt_dlp": shutil.which("yt-dlp"),
+        "ffmpeg": shutil.which("ffmpeg")
+    }
+
+
+@app.route("/test")
+def test():
+    result = subprocess.run(
+        [
+            "yt-dlp",
+            "-f",
+            "bv*+ba/b",
+            "--merge-output-format",
+            "mp4",
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        ],
+        capture_output=True,
+        text=True
+    )
+
+    return {
+        "returncode": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr
+    }
+
+
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
+
 
 @app.route('/download', methods=['POST'])
 def start_download():
